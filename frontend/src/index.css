@@ -1,0 +1,42 @@
+/* AURA — Estilos globales */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg:       #0F0F0F;
+  --surface:  #18181B;
+  --surface2: #1C1C1F;
+  --border:   #27272A;
+  --primary:  #6D28D9;
+  --primary2: #8B5CF6;
+  --text:     #FFFFFF;
+  --muted:    #A1A1AA;
+  --success:  #22C55E;
+  --warn:     #F59E0B;
+  --danger:   #EF4444;
+  --info:     #3B82F6;
+}
+
+html { font-size: 16px; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar personalizada */
+::-webkit-scrollbar        { width: 4px; height: 4px; }
+::-webkit-scrollbar-track  { background: var(--bg); }
+::-webkit-scrollbar-thumb  { background: var(--border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+
+/* Inputs globales */
+input, select, textarea {
+  font-family: 'Inter', sans-serif;
+}

@@ -1,0 +1,91 @@
+version: "3.8"
+
+# ============================================================
+#  AURA — Docker Compose (desarrollo local)
+#  Uso: docker-compose up --build    (Docker antiguo, con guion)
+#  o:   docker compose up --build    (Docker >= 20.10, sin guion)
+# ============================================================
+
+services:
+
+  # ─── Base de datos PostgreSQL ───────────────────────────────
+  db:
+    image: postgres:15-alpine
+    container_name: aura_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       aura_db
+      POSTGRES_USER:     aura_user
+      POSTGRES_PASSWORD: aura_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aura_user -d aura_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - aura_network
+
+  # ─── Backend FastAPI ────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aura_backend
+    restart: unless-stopped
+    environment:
+      POSTGRES_SERVER:   db
+      POSTGRES_USER:     aura_user
+      POSTGRES_PASSWORD: aura_pass
+      POSTGRES_DB:       aura_db
+      POSTGRES_PORT:     "5432"
+      SECRET_KEY:        "cambia_esto_en_produccion_openssl_rand_hex_32"
+      ACCESS_TOKEN_EXPIRE_MINUTES: "10080"
+      DEBUG:             "true"
+      BACKEND_CORS_ORIGINS: '["http://localhost:5173","http://localhost:3000","http://localhost"]'
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - aura_network
+    command: >
+      uvicorn app.main:app
+        --host 0.0.0.0
+        --port 8000
+        --reload
+
+  # ─── Frontend React + Vite ──────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: aura_frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: http://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - aura_network
+
+volumes:
+  postgres_data:
+    name: aura_postgres_data
+
+networks:
+  aura_network:
+    name: aura_network
+    driver: bridge
