@@ -122,6 +122,64 @@ class AnalisisResponse(BaseModel):
     gastos_hormiga: List[GastoHormiga]
 
 
+# ─── Presupuesto ─────────────────────────────────────────────────────────────
+class PresupuestoCreate(BaseModel):
+    categoria: str = Field(..., pattern=CATEGORIAS)
+    monto_limite: float = Field(..., gt=0)
+    mes: int = Field(..., ge=1, le=12)
+    anio: int = Field(..., ge=2020)
+
+
+class PresupuestoUpdate(BaseModel):
+    monto_limite: float = Field(..., gt=0)
+
+
+class PresupuestoResponse(BaseModel):
+    id: int
+    categoria: str
+    monto_limite: float
+    mes: int
+    anio: int
+    gasto_actual: float
+    porcentaje_usado: float
+    disponible: float
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ─── Aporte Meta ──────────────────────────────────────────────────────────────
+class AporteMetaCreate(BaseModel):
+    monto: float = Field(..., gt=0)
+    fecha: date
+    descripcion: Optional[str] = Field(None, max_length=255)
+
+
+class AporteMetaResponse(BaseModel):
+    id: int
+    meta_id: int
+    monto: float
+    fecha: date
+    descripcion: Optional[str]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ─── Comparativa mensual ──────────────────────────────────────────────────────
+class ComparativaMes(BaseModel):
+    mes: int
+    anio: int
+    label: str
+    ingreso_total: float
+    gasto_total: float
+    balance: float
+    porcentaje_ahorro: float
+    gastos_por_categoria: dict
+
+
 # ─── Recomendacion ────────────────────────────────────────────────────────────
 class RecomendacionResponse(BaseModel):
     id: int

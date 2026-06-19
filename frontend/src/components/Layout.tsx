@@ -7,6 +7,8 @@ const NAV = [
   { path: '/ingresos',        icon: '↑', label: 'Ingresos' },
   { path: '/gastos',          icon: '↓', label: 'Gastos' },
   { path: '/analisis',        icon: '◎', label: 'Análisis' },
+  { path: '/comparativa',     icon: '≋', label: 'Comparativa' },
+  { path: '/presupuestos',    icon: '▣', label: 'Presupuestos' },
   { path: '/hormigas',        icon: '⬡', label: 'Gastos Hormiga' },
   { path: '/metas',           icon: '◉', label: 'Metas' },
   { path: '/recomendaciones', icon: '✦', label: 'Recomendaciones' },

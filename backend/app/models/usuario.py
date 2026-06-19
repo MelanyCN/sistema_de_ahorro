@@ -28,3 +28,5 @@ class Usuario(Base):
     metas = relationship("Meta", back_populates="usuario", cascade="all, delete-orphan")
     recomendaciones = relationship("Recomendacion", back_populates="usuario", cascade="all, delete-orphan")
     notificaciones = relationship("Notificacion", back_populates="usuario", cascade="all, delete-orphan")
+    presupuestos = relationship("Presupuesto", back_populates="usuario", cascade="all, delete-orphan")
+    aportes_meta = relationship("AporteMeta", back_populates="usuario", cascade="all, delete-orphan")

@@ -13,7 +13,7 @@ from app.db.session import get_db
 from app.models.usuario import Usuario
 from app.models.ingreso import Ingreso
 from app.models.gasto import Gasto
-from app.schemas.schemas import AnalisisResponse, GastoHormiga, RecomendacionResponse
+from app.schemas.schemas import AnalisisResponse, GastoHormiga, RecomendacionResponse, ComparativaMes
 
 router = APIRouter()
 
@@ -225,6 +225,58 @@ def get_recomendaciones(
         })
 
     return rules
+
+
+_MESES_ES = {
+    1: "Ene", 2: "Feb", 3: "Mar", 4: "Abr",
+    5: "May", 6: "Jun", 7: "Jul", 8: "Ago",
+    9: "Sep", 10: "Oct", 11: "Nov", 12: "Dic",
+}
+
+
+@router.get("/comparativa", response_model=List[ComparativaMes])
+def get_comparativa(
+    meses: int = Query(3, ge=2, le=12),
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    """Devuelve el resumen financiero de los últimos N meses (incluye el actual)."""
+    today = date.today()
+    resultado = []
+
+    for i in range(meses - 1, -1, -1):
+        mes = today.month - i
+        anio = today.year
+        while mes <= 0:
+            mes += 12
+            anio -= 1
+
+        from sqlalchemy import extract as sa_extract
+        gastos = db.query(Gasto).filter(
+            Gasto.usuario_id == current_user.id,
+            sa_extract("month", Gasto.fecha) == mes,
+            sa_extract("year", Gasto.fecha) == anio,
+        ).all()
+
+        ingresos = db.query(Ingreso).filter(
+            Ingreso.usuario_id == current_user.id,
+            sa_extract("month", Ingreso.fecha) == mes,
+            sa_extract("year", Ingreso.fecha) == anio,
+        ).all()
+
+        data = _calcular_analisis(gastos, ingresos)
+        resultado.append(ComparativaMes(
+            mes=mes,
+            anio=anio,
+            label=f"{_MESES_ES[mes]} {anio}",
+            ingreso_total=data["ingreso_total"],
+            gasto_total=data["gasto_total"],
+            balance=data["balance"],
+            porcentaje_ahorro=data["porcentaje_ahorro"],
+            gastos_por_categoria=data["gastos_por_categoria"],
+        ))
+
+    return resultado
 
 
 @router.get("/perfil-financiero")

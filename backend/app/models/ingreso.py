@@ -24,7 +24,7 @@ class Ingreso(Base):
     usuario_id = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False)
     monto = Column(Float, nullable=False)
     fecha = Column(Date, nullable=False, default=date.today)
-    tipo = Column(Enum(TipoIngreso), nullable=False, default=TipoIngreso.sueldo)
+    tipo = Column(Enum(TipoIngreso, values_callable=lambda x: [e.value for e in x]), nullable=False, default=TipoIngreso.sueldo)
     descripcion = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

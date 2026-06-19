@@ -10,6 +10,7 @@ from app.api.v1.endpoints import (
     metas,
     analisis,
     notificaciones,
+    presupuestos,
 )
 
 api_router = APIRouter()
@@ -20,3 +21,4 @@ api_router.include_router(gastos.router, prefix="/gastos", tags=["Gastos"])
 api_router.include_router(metas.router, prefix="/metas", tags=["Metas de Ahorro"])
 api_router.include_router(analisis.router, prefix="/analisis", tags=["Análisis Financiero"])
 api_router.include_router(notificaciones.router, prefix="/notificaciones", tags=["Notificaciones"])
+api_router.include_router(presupuestos.router, prefix="/presupuestos", tags=["Presupuestos"])

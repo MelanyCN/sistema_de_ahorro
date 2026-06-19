@@ -7,8 +7,10 @@ import type {
   Ingreso, IngresoCreate, IngresoUpdate,
   Gasto, GastoCreate, GastoUpdate,
   Meta, MetaCreate, MetaUpdate,
-  Analisis, Recomendacion, PerfilFinanciero,
+  Analisis, Recomendacion, PerfilFinanciero, ComparativaMes,
   Notificacion,
+  Presupuesto, PresupuestoCreate, PresupuestoUpdate,
+  AporteMeta, AporteMetaCreate,
 } from '../types'
 
 // ─── Auth ──────────────────────────────────────────────────────────────────
@@ -102,6 +104,17 @@ export const metasService = {
   delete: async (id: number): Promise<void> => {
     await api.delete(`/metas/${id}`)
   },
+  listAportes: async (metaId: number): Promise<AporteMeta[]> => {
+    const res = await api.get<AporteMeta[]>(`/metas/${metaId}/aportes`)
+    return res.data
+  },
+  createAporte: async (metaId: number, data: AporteMetaCreate): Promise<Meta> => {
+    const res = await api.post<Meta>(`/metas/${metaId}/aportes`, data)
+    return res.data
+  },
+  deleteAporte: async (metaId: number, aporteId: number): Promise<void> => {
+    await api.delete(`/metas/${metaId}/aportes/${aporteId}`)
+  },
 }
 
 // ─── Análisis ──────────────────────────────────────────────────────────────
@@ -117,6 +130,29 @@ export const analisisService = {
   getPerfilFinanciero: async (): Promise<PerfilFinanciero> => {
     const res = await api.get<PerfilFinanciero>('/analisis/perfil-financiero')
     return res.data
+  },
+  getComparativa: async (meses = 3): Promise<ComparativaMes[]> => {
+    const res = await api.get<ComparativaMes[]>('/analisis/comparativa', { params: { meses } })
+    return res.data
+  },
+}
+
+// ─── Presupuestos ──────────────────────────────────────────────────────────
+export const presupuestosService = {
+  list: async (params?: { mes?: number; anio?: number }): Promise<Presupuesto[]> => {
+    const res = await api.get<Presupuesto[]>('/presupuestos/', { params })
+    return res.data
+  },
+  create: async (data: PresupuestoCreate): Promise<Presupuesto> => {
+    const res = await api.post<Presupuesto>('/presupuestos/', data)
+    return res.data
+  },
+  update: async (id: number, data: PresupuestoUpdate): Promise<Presupuesto> => {
+    const res = await api.put<Presupuesto>(`/presupuestos/${id}`, data)
+    return res.data
+  },
+  delete: async (id: number): Promise<void> => {
+    await api.delete(`/presupuestos/${id}`)
   },
 }
 

@@ -33,7 +33,7 @@ cd aura
 
 ### 2. Levantar con Docker Compose
 ```bash
-docker-compose up --build
+docker-compose up --build -d
 ```
 
 Esto levanta automáticamente:
@@ -41,7 +41,61 @@ Esto levanta automáticamente:
 - Backend FastAPI en `localhost:8000`
 - Frontend React en `localhost:5173`
 
-### 3. Abrir la aplicación
+### 3. Insertar datos de prueba
+
+El script `init.sql` crea las tablas, pero el seed de datos debe insertarse manualmente
+debido a un desajuste entre los tipos enum de PostgreSQL y los que genera SQLAlchemy.
+Esperar ~10 segundos a que el backend levante y luego ejecutar:
+
+```bash
+# Usuario demo (contraseña: demo1234)
+docker exec aura_db psql -U aura_user -d aura_db -c "
+INSERT INTO usuarios (nombre, apellido, email, edad, ingreso_mensual, password_hash)
+VALUES ('Alex', 'Torres', 'demo@aura.pe', 23, 2630.00,
+  '\$2b\$12\$5GQ.MJB3bGjqbDORlOhnf.8qAcserr/Uhz0zJl/rqI3v.ObEcxHJu')
+ON CONFLICT (email) DO NOTHING;"
+
+# Ingresos
+docker exec aura_db psql -U aura_user -d aura_db -c "
+WITH usr AS (SELECT id FROM usuarios WHERE email = 'demo@aura.pe')
+INSERT INTO ingresos (usuario_id, monto, fecha, tipo, descripcion)
+SELECT u.id, v.monto, v.fecha::DATE, v.tipo::tipo_ingreso, v.descripcion
+FROM usr u, (VALUES
+    (2200.00::numeric,'2025-06-01'::text,'Sueldo'::text,'Sueldo mensual'::text),
+    (350.00::numeric, '2025-06-10','Freelance','Proyecto web'),
+    (80.00::numeric,  '2025-06-14','Propina',  'Propinas acumuladas')
+) AS v(monto,fecha,tipo,descripcion);"
+
+# Gastos
+docker exec aura_db psql -U aura_user -d aura_db -c "
+WITH usr AS (SELECT id FROM usuarios WHERE email = 'demo@aura.pe')
+INSERT INTO gastos (usuario_id, monto, fecha, categoria, descripcion, created_at)
+SELECT u.id, v.monto, v.fecha::DATE, v.cat::categoriagasto, v.desc, NOW()
+FROM usr u, (VALUES
+    (220.00::numeric,'2025-06-04'::text,'alimentacion'::text,'Supermercado'::text),
+    (180.00::numeric,'2025-06-05','compras',        'Ropa'),
+    (150.00::numeric,'2025-06-13','educacion',       'Curso online'),
+    (90.00::numeric, '2025-06-08','servicios',       'Luz + agua'),
+    (80.00::numeric, '2025-06-02','transporte',      'Uber'),
+    (60.00::numeric, '2025-06-06','salud',           'Farmacia'),
+    (45.00::numeric, '2025-06-06','entretenimiento', 'Delivery'),
+    (35.00::numeric, '2025-06-03','entretenimiento', 'Netflix'),
+    (25.00::numeric, '2025-06-15','transporte',      'Gasolina'),
+    (38.00::numeric, '2025-06-15','entretenimiento', 'Cine')
+) AS v(monto,fecha,cat,desc);"
+
+# Metas de ahorro
+docker exec aura_db psql -U aura_user -d aura_db -c "
+WITH usr AS (SELECT id FROM usuarios WHERE email = 'demo@aura.pe')
+INSERT INTO metas (usuario_id, nombre, monto_objetivo, monto_actual, fecha_objetivo, estado, created_at)
+SELECT u.id, v.nombre, v.obj::float, v.act::float, v.fecha::DATE, v.estado::estadometa, NOW()
+FROM usr u, (VALUES
+    ('Laptop nueva'::text,'2500.00'::text,'850.00'::text,'2025-09-01'::text,'activa'::text),
+    ('Viaje a Lima',       '800.00',      '800.00',      '2025-07-15',      'completada')
+) AS v(nombre,obj,act,fecha,estado);"
+```
+
+### 4. Abrir la aplicación
 - **App:** http://localhost:5173
 - **API Swagger:** http://localhost:8000/docs
 - **ReDoc:** http://localhost:8000/redoc
@@ -50,6 +104,30 @@ Esto levanta automáticamente:
 ```
 Email:    demo@aura.pe
 Password: demo1234
+```
+
+---
+
+## Redespliegue
+
+### Reinicio normal (mantener datos)
+```bash
+docker-compose down
+docker-compose up -d
+```
+Los datos se preservan porque el volumen `aura_postgres_data` no se elimina.
+
+### Rebuild (cambiaste código Python o TypeScript)
+```bash
+docker-compose down
+docker-compose up --build -d
+```
+
+### Inicio limpio (borrar todo y empezar desde cero)
+```bash
+docker-compose down -v        # -v elimina también el volumen de la DB
+docker-compose up --build -d
+# Luego repetir el paso 3 para insertar los datos de prueba
 ```
 
 ---

@@ -13,6 +13,8 @@ import HormigasPage from './pages/HormigasPage'
 import MetasPage from './pages/MetasPage'
 import RecomendacionesPage from './pages/RecomendacionesPage'
 import PerfilPage from './pages/PerfilPage'
+import PresupuestosPage from './pages/PresupuestosPage'
+import ComparativaPage from './pages/ComparativaPage'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -37,6 +39,8 @@ export default function App() {
         <Route path="analisis" element={<AnalisisPage />} />
         <Route path="hormigas" element={<HormigasPage />} />
         <Route path="metas" element={<MetasPage />} />
+        <Route path="presupuestos" element={<PresupuestosPage />} />
+        <Route path="comparativa" element={<ComparativaPage />} />
         <Route path="recomendaciones" element={<RecomendacionesPage />} />
         <Route path="perfil" element={<PerfilPage />} />
       </Route>

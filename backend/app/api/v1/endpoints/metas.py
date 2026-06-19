@@ -1,6 +1,7 @@
 """
-Endpoints CRUD: Metas de Ahorro
+Endpoints CRUD: Metas de Ahorro + Aportes
 """
+from datetime import date
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -10,7 +11,8 @@ from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.models.usuario import Usuario
 from app.models.meta import Meta
-from app.schemas.schemas import MetaCreate, MetaUpdate, MetaResponse
+from app.models.aporte_meta import AporteMeta
+from app.schemas.schemas import MetaCreate, MetaUpdate, MetaResponse, AporteMetaCreate, AporteMetaResponse
 
 router = APIRouter()
 
@@ -95,4 +97,83 @@ def delete_meta(
     if not meta:
         raise HTTPException(status_code=404, detail="Meta no encontrada")
     db.delete(meta)
+    db.commit()
+
+
+# ─── Aportes ──────────────────────────────────────────────────────────────────
+
+@router.get("/{meta_id}/aportes", response_model=List[AporteMetaResponse])
+def list_aportes(
+    meta_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    meta = db.query(Meta).filter(
+        Meta.id == meta_id, Meta.usuario_id == current_user.id
+    ).first()
+    if not meta:
+        raise HTTPException(status_code=404, detail="Meta no encontrada")
+    return (
+        db.query(AporteMeta)
+        .filter(AporteMeta.meta_id == meta_id)
+        .order_by(AporteMeta.fecha.desc())
+        .all()
+    )
+
+
+@router.post("/{meta_id}/aportes", response_model=MetaResponse, status_code=status.HTTP_201_CREATED)
+def create_aporte(
+    meta_id: int,
+    aporte_in: AporteMetaCreate,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    """Registra un aporte e incrementa monto_actual de la meta."""
+    meta = db.query(Meta).filter(
+        Meta.id == meta_id, Meta.usuario_id == current_user.id
+    ).first()
+    if not meta:
+        raise HTTPException(status_code=404, detail="Meta no encontrada")
+
+    aporte = AporteMeta(
+        **aporte_in.model_dump(),
+        meta_id=meta_id,
+        usuario_id=current_user.id,
+    )
+    db.add(aporte)
+
+    meta.monto_actual = (meta.monto_actual or 0.0) + aporte_in.monto
+    if meta.monto_actual >= meta.monto_objetivo:
+        meta.estado = "completada"
+
+    db.commit()
+    db.refresh(meta)
+    return meta
+
+
+@router.delete("/{meta_id}/aportes/{aporte_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_aporte(
+    meta_id: int,
+    aporte_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    """Elimina un aporte y descuenta el monto de la meta."""
+    meta = db.query(Meta).filter(
+        Meta.id == meta_id, Meta.usuario_id == current_user.id
+    ).first()
+    if not meta:
+        raise HTTPException(status_code=404, detail="Meta no encontrada")
+
+    aporte = db.query(AporteMeta).filter(
+        AporteMeta.id == aporte_id, AporteMeta.meta_id == meta_id
+    ).first()
+    if not aporte:
+        raise HTTPException(status_code=404, detail="Aporte no encontrado")
+
+    meta.monto_actual = max(0.0, (meta.monto_actual or 0.0) - aporte.monto)
+    if meta.estado == "completada" and meta.monto_actual < meta.monto_objetivo:
+        meta.estado = "activa"
+
+    db.delete(aporte)
     db.commit()

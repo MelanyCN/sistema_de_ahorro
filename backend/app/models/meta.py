@@ -29,6 +29,7 @@ class Meta(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     usuario = relationship("Usuario", back_populates="metas")
+    aportes = relationship("AporteMeta", back_populates="meta", cascade="all, delete-orphan")
 
     @property
     def progreso_porcentaje(self) -> float:

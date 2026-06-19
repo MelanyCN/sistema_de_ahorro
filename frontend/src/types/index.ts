@@ -155,3 +155,55 @@ export interface Notificacion {
   leida: boolean
   fecha: string
 }
+
+// ─── Presupuesto ───────────────────────────────────────────────────────────
+export interface Presupuesto {
+  id: number
+  categoria: CategoriaGasto
+  monto_limite: number
+  mes: number
+  anio: number
+  gasto_actual: number
+  porcentaje_usado: number
+  disponible: number
+  created_at: string
+}
+
+export interface PresupuestoCreate {
+  categoria: CategoriaGasto
+  monto_limite: number
+  mes: number
+  anio: number
+}
+
+export interface PresupuestoUpdate {
+  monto_limite: number
+}
+
+// ─── Aporte Meta ───────────────────────────────────────────────────────────
+export interface AporteMeta {
+  id: number
+  meta_id: number
+  monto: number
+  fecha: string
+  descripcion?: string
+  created_at: string
+}
+
+export interface AporteMetaCreate {
+  monto: number
+  fecha: string
+  descripcion?: string
+}
+
+// ─── Comparativa ───────────────────────────────────────────────────────────
+export interface ComparativaMes {
+  mes: number
+  anio: number
+  label: string
+  ingreso_total: number
+  gasto_total: number
+  balance: number
+  porcentaje_ahorro: number
+  gastos_por_categoria: Record<string, number>
+}
