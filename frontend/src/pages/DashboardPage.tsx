@@ -2,7 +2,7 @@
  * DashboardPage — conecta con la API real
  */
 import { useQuery } from '@tanstack/react-query'
-import { analisisService, ingresosService, gastosService } from '../services'
+import { analisisService } from '../services'
 import { useAuthStore } from '../store/authStore'
 
 const C = { surface:'#18181B', border:'#27272A', muted:'#A1A1AA', success:'#22C55E', danger:'#EF4444', warn:'#F59E0B', primary2:'#8B5CF6' }
