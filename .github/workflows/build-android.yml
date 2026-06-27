@@ -40,6 +40,14 @@ jobs:
         working-directory: frontend
         run: npx cap sync android
 
+      - name: Install Android SDK components
+        run: |
+          ANDROID_HOME=/usr/local/lib/android/sdk
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            "platforms;android-36" \
+            "build-tools;36.0.0" \
+            "platform-tools"
+
       - name: Make Gradle wrapper executable
         working-directory: frontend/android
         run: chmod +x gradlew
